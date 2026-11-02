@@ -14,7 +14,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -31,8 +31,16 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
         
+      - name: Patch expo-autolinking bug
+        run: |
+          sed -i 's/const watchedDirectories = JSON.parse(watchedDirectoriesSerialized);/const watchedDirectories = []; \/\/ PATCHED/' node_modules/expo-modules-autolinking/build/commands/mirrorKotlinInlineModulesCommand.js
+          sed -i 's/package="[^"]*"//g' node_modules/@react-native-masked-view/masked-view/android/src/main/AndroidManifest.xml
+          
       - name: Generate Android Project
         run: npx expo prebuild --platform android --clean
+        
+      - name: Disable R8
+        run: sed -i 's/minifyEnabled true/minifyEnabled false/g' android/app/build.gradle
         
       - name: Build APK
         run: |
